@@ -1,0 +1,26 @@
+﻿<div ng-controller="Diplo.Translate.DictController as vm">
+    <umb-pane>
+        <h3>Dictionary Translate</h3>
+
+        <umb-load-indicator ng-show="vm.isLoading"></umb-load-indicator>
+
+        <p>This will use an AI translation service to complete all the dictionary items that are currently empty (by translating from the default language). Click the button below to get started!</p>
+
+        <hr />
+
+        <umb-button action="vm.translate()"
+                    type="button"
+                    button-style="action"
+                    state="vm.buttonState"
+                    label="Translate"
+                    disabled="vm.buttonState === 'busy'">
+        </umb-button>
+
+        <br /><br />
+
+        <p ng-show="vm.alert" class="alert alert-{{vm.alert.alertType | lowercase}}">{{vm.alert.message}}</p>
+
+    </umb-pane>
+
+
+</div>

@@ -1,0 +1,56 @@
+﻿(function () {
+    'use strict';
+
+    angular.module("umbraco")
+        .controller("Diplo.Translate.DictController",
+            function (diploTranslateResources, notificationsService, diploTranslatorHub) {
+                var vm = this;
+                vm.isLoading = false;
+                vm.alert = null;
+
+                InitHub();
+
+                vm.translate = function () {
+
+                    vm.buttonState = "busy";
+                    vm.isLoading = true;
+
+                    const clientId = getClientId();
+
+                    diploTranslateResources.translateAllDictionary(clientId).then(function (data) {
+
+                        vm.buttonState = "success";
+                        vm.isLoading = false;
+
+                        notificationsService.success("Translation Complete", data + " items were translated");
+
+                        setTimeout(function () {
+                            window.location.reload(true);
+                        }, 2000);
+
+                    });
+                }
+
+                ////// SignalR things 
+                function InitHub() {
+                    diploTranslatorHub.initHub(function (hub) {
+                        vm.hub = hub;
+
+                        vm.hub.on('alert', function (data) {
+                            console.log("Alert:", data);
+                            vm.alert = data;
+                        });
+
+                        vm.hub.start();
+                    });
+                }
+
+                function getClientId() {
+                    if ($.connection !== undefined) {
+                        return $.connection.connectionId;
+                    }
+                    return "";
+                }
+
+            });
+})();

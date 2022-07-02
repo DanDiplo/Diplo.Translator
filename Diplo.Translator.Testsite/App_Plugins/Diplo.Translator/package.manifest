@@ -1,0 +1,10 @@
+﻿{
+  "name": "Diplo.Translator",
+  "version": "10.0.0",
+  "allowPackageTelemetry": true,
+  "javascript": [
+    "~/App_Plugins/Diplo.Translator/Diplo.Translate.DictController.js",
+    "~/App_Plugins/Diplo.Translator/Diplo.Translate.Resources.js",
+    "~/App_Plugins/Diplo.Translator/Diplo.Translate.Hub.js"
+  ]
+}

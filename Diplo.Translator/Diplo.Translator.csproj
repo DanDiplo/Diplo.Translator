@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ContentTargetFolders>.</ContentTargetFolders>
+    <Product>Diplo.Translator</Product>
+    <PackageId>Diplo.Translator</PackageId>
+    <Title>Diplo.Translator</Title>
+    <Description>...</Description>
+    <PackageTags>umbraco plugin package</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="10.0.1" />
+    <PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="10.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="App_Plugins\Diplo.Translator\**">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+    <None Include="build\**">
+      <Pack>true</Pack>
+      <PackagePath>buildTransitive</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="App_Plugins\Diplo.Translator\Dictionary.html" />
+    <None Remove="App_Plugins\Diplo.Translator\Diplo.Translate.DictController.js" />
+    <None Remove="App_Plugins\Diplo.Translator\Diplo.Translate.Hub.js" />
+    <None Remove="App_Plugins\Diplo.Translator\Diplo.Translate.Resources.js" />
+  </ItemGroup>
+</Project>
