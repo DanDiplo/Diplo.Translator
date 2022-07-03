@@ -46,6 +46,10 @@ For example, if you have a site with 3 languages: English (default), French and 
 
 **Note:** Whilst Microsoft Translator supports most languages there may be instances where it is not able to translate. See https://www.microsoft.com/en-us/translator/languages/ for supported languages.
 
+## Demo
+
+You can view a demo at: https://www.youtube.com/shorts/1R8QtCBkyEk
+
 ## Get in Touch
 
 You can reach me (Dan 'Diplo' Booth) at:
