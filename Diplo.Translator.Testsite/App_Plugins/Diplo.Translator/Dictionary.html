@@ -8,15 +8,18 @@
 
         <hr />
 
-        <umb-button action="vm.translate()"
-                    type="button"
-                    button-style="action"
-                    state="vm.buttonState"
-                    label="Translate"
-                    disabled="vm.buttonState === 'busy'">
-        </umb-button>
+        <div ng-show="vm.active">
 
-        <br /><br />
+            <umb-button action="vm.translate()"
+                        type="button"
+                        button-style="action"
+                        state="vm.buttonState"
+                        label="Translate"
+                        disabled="vm.buttonState === 'busy'">
+            </umb-button>
+
+            <br /><br />
+        </div>
 
         <p ng-show="vm.alert" class="alert alert-{{vm.alert.alertType | lowercase}}">{{vm.alert.message}}</p>
 

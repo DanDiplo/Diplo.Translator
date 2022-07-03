@@ -7,6 +7,19 @@
                 var vm = this;
                 vm.isLoading = false;
                 vm.alert = null;
+                vm.active = false;
+
+                diploTranslateResources.checkConfiguration().then(function (response) {
+
+                    if (!response.Ok) {
+                        vm.alert = { alertType: "error", message: response.Message };
+                        vm.active = false;
+                        return;
+                    }
+                    else {
+                        vm.active = true;
+                    }
+                });
 
                 InitHub();
 
@@ -17,17 +30,23 @@
 
                     const clientId = getClientId();
 
-                    diploTranslateResources.translateAllDictionary(clientId).then(function (data) {
+                    diploTranslateResources.translateAllDictionary(clientId).then(function (response) {
 
-                        vm.buttonState = "success";
+                        console.log(response);
+
                         vm.isLoading = false;
+                        vm.buttonState = "success";
 
-                        notificationsService.success("Translation Complete", data + " items were translated");
+                        if (response.ErrorCount > 0) {
+                            notificationsService.warning(response.Message);
+                        }
+                        else {
+                            notificationsService.success(response.Message);
 
-                        setTimeout(function () {
-                            window.location.reload(true);
-                        }, 2000);
-
+                            setTimeout(function () {
+                                window.location.reload(true);
+                            }, 2000);
+                        }
                     });
                 }
 

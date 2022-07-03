@@ -51,7 +51,8 @@ msbuild.wrn
 umbraco
 #wwwroot/media
 wwwroot/umbraco
-//Diplo.Translator.Testsite//App_Plugins/
+//Diplo.Translator.Testsite/App_Plugins/
 //BuildPackage
 //packages
 
+/Diplo.Translator.Testsite/Smidge/Cache/

@@ -12,6 +12,11 @@
                         url: translateApiUrl + "TranslateAll?clientId=" + clientId
                     })
                 );
+            },
+            checkConfiguration: function () {
+                return umbRequestHelper.resourcePromise(
+                    $http.get(translateApiUrl + "CheckConfiguration")
+                );
             }
         };
     });
