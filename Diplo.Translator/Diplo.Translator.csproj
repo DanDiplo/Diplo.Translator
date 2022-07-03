@@ -5,8 +5,18 @@
     <Product>Diplo.Translator</Product>
     <PackageId>Diplo.Translator</PackageId>
     <Title>Diplo.Translator</Title>
-    <Description>...</Description>
-    <PackageTags>umbraco plugin package</PackageTags>
+	<Version>10.0.0</Version>
+    <Description>Umbraco 10 package that adds AI-based translation to the Dictionary section of Umbraco allowing you to translate all items with a single button click.</Description>
+    <PackageTags>umbraco plugin package translation dictionary translator</PackageTags>
+    <Company>DanDiplo</Company>
+    <Copyright>Dan 'Diplo' Booth</Copyright>
+    <PackageProjectUrl>https://github.com/DanDiplo/Diplo.Translator</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DanDiplo/Diplo.Translator</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>Initial release for Umbraco 10.</PackageReleaseNotes>
+    <PackageLicenseExpression>mit</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,5 +40,16 @@
     <None Remove="App_Plugins\Diplo.Translator\Diplo.Translate.DictController.js" />
     <None Remove="App_Plugins\Diplo.Translator\Diplo.Translate.Hub.js" />
     <None Remove="App_Plugins\Diplo.Translator\Diplo.Translate.Resources.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Images\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 </Project>
