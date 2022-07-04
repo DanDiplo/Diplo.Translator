@@ -52,8 +52,9 @@
 
                     vm.buttonState = "busy";
                     vm.isLoading = true;
-
                     const clientId = getClientId();
+
+                    // calls API service
 
                     diploTranslateResources.translateAllDictionary(clientId, vm.langFrom.IsoCode, vm.overwrite).then(function (response) {
 
@@ -63,8 +64,10 @@
                         if (response.ErrorCount > 0) {
                             notificationsService.warning(response.Message);
                         }
-                        else {
+                        else { // OK
                             notificationsService.success(response.Message);
+
+                            // reload
 
                             setTimeout(function () {
                                 window.location.reload(true);
@@ -84,7 +87,6 @@
                         vm.hub = hub;
 
                         vm.hub.on('alert', function (data) {
-                            console.log("Alert:", data);
                             vm.alert = data;
                         });
 
