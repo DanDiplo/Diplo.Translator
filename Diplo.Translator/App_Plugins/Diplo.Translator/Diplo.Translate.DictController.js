@@ -8,31 +8,55 @@
                 vm.isLoading = false;
                 vm.alert = null;
                 vm.active = false;
+                vm.overwrite = false;
+                vm.languages = [];
+                vm.langFrom = null;
+
+
+                // Populates language select
+
+                diploTranslateResources.getLanguages().then(function (data) {
+                    vm.languages = data;
+                    vm.langFrom = vm.languages.filter(lang => lang.IsDefault)[0];
+                });
+
+                // Checks the config is OK
 
                 diploTranslateResources.checkConfiguration().then(function (response) {
-
                     if (!response.Ok) {
                         vm.alert = { alertType: "error", message: response.Message };
                         vm.active = false;
                         return;
                     }
                     else {
-                        vm.active = true;
+                        Init();
                     }
                 });
 
-                InitHub();
+                // Run after config is checked
+
+                const Init = function () {
+                    vm.active = true;
+                    InitHub();
+                }
+
+                // Handles translate button click
 
                 vm.translate = function () {
 
+                    if (vm.overwrite) {
+                        if (!window.confirm("You have chosen to overwrite existing dictionary values with new translations. Are you sure?")) {
+                            return;
+                        }
+                    }
+
                     vm.buttonState = "busy";
                     vm.isLoading = true;
-
                     const clientId = getClientId();
 
-                    diploTranslateResources.translateAllDictionary(clientId).then(function (response) {
+                    // calls API service
 
-                        console.log(response);
+                    diploTranslateResources.translateAllDictionary(clientId, vm.langFrom.IsoCode, vm.overwrite).then(function (response) {
 
                         vm.isLoading = false;
                         vm.buttonState = "success";
@@ -40,8 +64,10 @@
                         if (response.ErrorCount > 0) {
                             notificationsService.warning(response.Message);
                         }
-                        else {
+                        else { // OK
                             notificationsService.success(response.Message);
+
+                            // reload
 
                             setTimeout(function () {
                                 window.location.reload(true);
@@ -50,13 +76,17 @@
                     });
                 }
 
-                ////// SignalR things 
+                vm.toggle = function () {
+                    vm.overwrite = !vm.overwrite;
+                }
+
+                // SignalR stuff
+
                 function InitHub() {
                     diploTranslatorHub.initHub(function (hub) {
                         vm.hub = hub;
 
                         vm.hub.on('alert', function (data) {
-                            console.log("Alert:", data);
                             vm.alert = data;
                         });
 

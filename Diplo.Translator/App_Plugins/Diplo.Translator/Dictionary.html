@@ -1,24 +1,41 @@
 ﻿<div ng-controller="Diplo.Translate.DictController as vm">
     <umb-pane>
-        <h3>Dictionary Translate</h3>
-
         <umb-load-indicator ng-show="vm.isLoading"></umb-load-indicator>
 
-        <p>This will use an AI translation service to complete all the dictionary items that are currently empty (by translating from the default language). Click the button below to get started!</p>
+        <p>This will use an AI translation service to complete all the dictionary items (by translating from the selected language).</p>
 
         <hr />
 
         <div ng-show="vm.active">
 
-            <umb-button action="vm.translate()"
-                        type="button"
-                        button-style="action"
-                        state="vm.buttonState"
-                        label="Translate"
-                        disabled="vm.buttonState === 'busy'">
-            </umb-button>
+            <div class="control-group">
+                <label for="languageFrom">Translate From:</label>
+                <br />
+                <select id="languageFrom" ng-model="vm.langFrom" ng-options="item.CultureName for item in vm.languages" class="input-large"></select>
+            </div>
 
-            <br /><br />
+            <div class="control-group">
+                <umb-toggle checked="vm.overwrite"
+                            on-click="vm.toggle()"
+                            show-labels="true"
+                            label-on="Overwrite existing values"
+                            label-off="Ignore existing values"
+                            label-position="right"
+                            hide-icons="true">
+                </umb-toggle>
+            </div>
+
+            <div class="control-group umb-control-group">
+                <br />
+                <umb-button action="vm.translate()"
+                            type="button"
+                            button-style="action"
+                            state="vm.buttonState"
+                            label="Translate"
+                            disabled="vm.buttonState === 'busy'">
+                </umb-button>
+
+            </div>
         </div>
 
         <p ng-show="vm.alert" class="alert alert-{{vm.alert.alertType | lowercase}}">{{vm.alert.message}}</p>

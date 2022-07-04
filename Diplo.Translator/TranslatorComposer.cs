@@ -20,7 +20,6 @@ namespace Diplo.Translator
             // Config
 
             builder.Services.Configure<TranslationConfig>(builder.Config.GetSection(TranslationConfig.ConfigSectionName));
-
             builder.AddNotificationHandler<ServerVariablesParsingNotification, DiploServerVariablesHandler>();
 
             // Menu
@@ -31,6 +30,10 @@ namespace Diplo.Translator
 
             builder.Services.AddScoped<IHttpJsonService, HttpJsonService>();
             builder.Services.AddScoped<ITranslationService, MicrosoftTranslatorService>();
+
+            // Services
+
+            builder.Services.AddScoped<IDictionaryTranslationService, DictionaryTranslationService>();
 
             // SignalR Hubs
 
