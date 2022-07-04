@@ -1,6 +1,6 @@
 # Diplo Translator for Umbraco
 
-This is package for [**Umbraco 10**](https://umbraco.com/) CMS that adds a `Translate` option to the Umbraco **Dictionary** within the **Translation** tree. This option can be used to automatically translate all the empty dictionary items in the tree from the default language using an AI-based translation service. By default this is [Microsoft Translator](https://www.microsoft.com/en-us/translator/). In future other providers may be supported.
+This is package for [**Umbraco 10**](https://umbraco.com/) CMS that adds a `Translate` option to the Umbraco **Dictionary** within the **Translation** tree. This option can be used to automatically translate all the empty dictionary items in the tree from the selected language using an AI-based translation service. By default this is [Microsoft Translator](https://www.microsoft.com/en-us/translator/). In future other providers may be supported.
 
 ## Set Up
 
@@ -8,7 +8,7 @@ This is package for [**Umbraco 10**](https://umbraco.com/) CMS that adds a `Tran
 
 To use this package you will need a [Microsoft Azure subscription](https://azure.microsoft.com/free/cognitive-services/) (which can be set-up for free) and to have created a [Translator resource](https://portal.azure.com/#create/Microsoft.CognitiveServicesTextTranslation) within the Azure Portal. You can use the free pricing tier (F0) for the service which will suffice for most use cases.
 
-Full instructions: https://docs.microsoft.com/en-us/azure/cognitive-services/translator/how-to-create-translator-resource
+Full instructions can be found online in the Azure documentation [Create a Translator resource](https://docs.microsoft.com/en-us/azure/cognitive-services/translator/how-to-create-translator-resource).
 
 Once you have done this you will have access to:
 
@@ -28,31 +28,34 @@ You could also set your API credentials as *secrets*, as outlined in the article
 
 ## Usage
 
-Once installed and configured (see above) you will be able to go to the **Translation** section in Umbraco where you find the **Dictionary**. Within here you can right-click on the **`...`** to select the new **Translate** option in the menu dialog:
+Once installed and configured (see above) you will be able to go to the **Translation** section in Umbraco where you find the **Dictionary**. Within here you can right-click on the **`...`** to select the new **Translate** option in the menu:
 
 ![Translate Menu](Images/Translate-Menu.PNG)
 
-This will then take you to the translate dialog:
+This will then take you to the **Translate** dialog:
 
 ![Translate Dialog](Images/Translate-Dialog.PNG)
 
-Simply click the **Translate** button and the system will translate **ALL** *empty* dictionary items from the default language (you will need to have added the values for the default language for this to work as it requires some text to translate from). 
+Here you can choose your options for how the dictionary items will be translated:
 
-**Note:** The default language is the language ticked as `default` in the `Settings > Languages` area of Umbraco.
+* **Translate From** - Use this to select the language to translate from (the default language for your site will be chosen first)
+* **Overwrite** - select whether to ignore existing values (ie. ones that already have translations) or to overwrite them. Be careful if overwriting as this will overwrite items that already have a translation and replace it with the AI translation.
+
+Then click the **Translate** button and the system will translate the dictionary items from the selected language (you will need to have added the values for this language for this to work as it obviously requires some text to translate from!). 
 
 ### For Example
 
-If you have a site with 3 languages: English (default), French and German then you will need to complete the values for all the English dictionary keys. Once you have done that, clicking **Translate** will translate *all* the French and German values using the configured translation service.
+If you have a site with 3 languages: English (*default*), French and German then you will need to complete the values for all the English dictionary keys to translate from that language. Once you have completed those, clicking **Translate** will translate *all* the French and German values using the AI translation service.
 
-* If an item already has a value for a language it will be skipped.
+* If an item already has a value for a language it will be skipped unless you explicitly select *Overwrite existing values*.
 
-* If an item hasn't had the default language value added for it will be skipped.
+* If the item being translated doesn't have a value for the language being translated *from* it will be skipped.
 
-**Note:** Whilst Microsoft Translator supports most languages there may be instances where it is not able to translate. See https://www.microsoft.com/en-us/translator/languages/ for supported languages.
+**Note:** Whilst Microsoft Translator supports most languages there may be instances where it is not able to translate if it doesn't recognise a language. See https://www.microsoft.com/en-us/translator/languages/ for supported languages.
 
 ## Demo
 
-You can view a video demo at: https://www.youtube.com/shorts/1R8QtCBkyEk
+You can view a video demo of the concept at: https://www.youtube.com/shorts/1R8QtCBkyEk
 
 ## Get in Touch
 
