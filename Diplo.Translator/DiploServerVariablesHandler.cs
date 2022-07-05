@@ -6,7 +6,7 @@ using Umbraco.Cms.Core.Notifications;
 namespace Diplo.Translator
 {
     /// <summary>
-    /// Adds variables that are accessible in Anguler
+    /// Adds variables that are accessible in Angular
     /// </summary>
     /// <remarks>
     /// See https://24days.in/umbraco-cms/2021/umbraco-9-server-variables/
