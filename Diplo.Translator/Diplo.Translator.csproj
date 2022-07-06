@@ -13,8 +13,8 @@
     <PackageProjectUrl>https://github.com/DanDiplo/Diplo.Translator</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DanDiplo/Diplo.Translator</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Initial release for Umbraco 10.</PackageReleaseNotes>
-    <PackageLicenseExpression>mit</PackageLicenseExpression>
+    <PackageReleaseNotes>Initial release for Umbraco 10 with Microsoft Translator integration.</PackageReleaseNotes>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
