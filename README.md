@@ -55,7 +55,15 @@ If you have a site with 3 languages: English (*default*), French and German then
 
 ## Demo
 
-You can view a video demo of the concept at: https://www.youtube.com/shorts/1R8QtCBkyEk
+**Video Demo:** https://www.youtube.com/shorts/1R8QtCBkyEk
+
+**Blog Post:** https://www.diplo.co.uk/blog/web-development/diplo-translator-for-umbraco/
+
+## Download & Install
+
+**NuGet:** https://www.nuget.org/packages/Diplo.Translator/
+
+`dotnet add package Diplo.Translator`
 
 ## Get in Touch
 
