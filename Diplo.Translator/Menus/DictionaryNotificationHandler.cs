@@ -2,7 +2,7 @@
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
 
-namespace Diplo.GodMode.Menus
+namespace Diplo.Translator.Menus
 {
     /// <summary>
     /// Used to add a menu item when the tree renders

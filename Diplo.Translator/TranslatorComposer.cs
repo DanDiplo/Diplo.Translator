@@ -1,5 +1,5 @@
-﻿using Diplo.GodMode.Menus;
-using Diplo.Translator.Hubs;
+﻿using Diplo.Translator.Hubs;
+using Diplo.Translator.Menus;
 using Diplo.Translator.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
