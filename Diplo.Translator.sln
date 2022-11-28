@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Info", "Info", "{A9DED17B-1BD6-4558-BDBE-852A736C5D72}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
+		Diplo.Translator\umbraco-marketplace.json = Diplo.Translator\umbraco-marketplace.json
 	EndProjectSection
 EndProject
 Global

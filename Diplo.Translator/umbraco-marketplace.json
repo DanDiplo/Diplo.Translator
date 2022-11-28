@@ -1,0 +1,37 @@
+{
+  "Title": "Diplo Translator",
+  "AlternatePackageNames": [ "Umbraco Translator", "Diplo.Translator" ],
+  "AuthorDetails": {
+    "Name": "Dan 'Diplo' Booth",
+    "Description": "Dan is an Umbraco MVP and has been releasing packages for Umbraco since Umbraco 6",
+    "Url": "https://www.diplo.co.uk/",
+    "ImageUrl": "https://pbs.twimg.com/profile_images/794295655846002688/S8SQ_XFM_400x400.jpg"
+  },
+  "Category": "Translations",
+  "Description": "This is package adds a Translate option to the Umbraco Dictionary within the Translation tree. This option can be used to automatically translate all the empty dictionary items in the tree from the selected language using an AI-based translation service. By default this is Microsoft Translator. In future other providers may be supported.",
+  "DocumentationUrl": "https://github.com/DanDiplo/Diplo.Translator/blob/master/README.md",
+  "LicenseTypes": [ "Free" ],
+  "IssueTrackerUrl": "https://github.com/DanDiplo/Diplo.Translator/issues",
+  "PackageType": "Package",
+  "PackagesByAuthor": [ "Diplo.AuditLogViewer", "Diplo.MediaDownloader", "Diplo.GodMode", "Diplo.DictionaryEditor", "DiploTraceLogViewer" ],
+  "Tags": [
+    "translation",
+    "translator",
+    "A.I.",
+    "dictionary",
+    "Microsoft translator"
+  ],
+  "Screenshots": [
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/DanDiplo/Diplo.Translator/master/Images/Translate-Dialog.PNG",
+      "Caption": "Translate Dialog"
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/DanDiplo/Diplo.Translator/master/Images/Translate-Menu.PNG",
+      "Caption": "Translate Menu"
+    }
+  ],
+  "VideoUrl": "https://www.youtube.com/watch?v=1R8QtCBkyEk"
+}
+
+// https://marketplace.umbraco.com/listing
