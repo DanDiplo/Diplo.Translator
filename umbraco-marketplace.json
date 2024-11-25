@@ -1,6 +1,7 @@
 {
   "Title": "Diplo Translator",
   "AlternatePackageNames": [ "Umbraco Translator", "Diplo.Translator" ],
+  "AlternateCategory": "Artificial Intelligence",
   "AuthorDetails": {
     "Name": "Dan 'Diplo' Booth",
     "Description": "Dan is an Umbraco MVP and has been releasing packages for Umbraco since Umbraco 6",
