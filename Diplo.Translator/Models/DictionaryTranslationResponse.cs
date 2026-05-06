@@ -1,28 +1,14 @@
-﻿namespace Diplo.Translator.Models
+namespace Diplo.Translator.Models;
+
+public sealed class DictionaryTranslationResponse
 {
-    /// <summary>
-    /// Represents the response returned by the <see cref="Services.DictionaryTranslationService"/>
-    /// </summary>
-    public class DictionaryTranslationResponse
-    {
-        /// <summary>
-        /// How many items in dictionary
-        /// </summary>
-        public int DictionaryCount { get; set; }
+    public int DictionaryCount { get; set; }
 
-        /// <summary>
-        /// How many items translated
-        /// </summary>
-        public int TranslationCount { get; set; }
+    public int TranslationCount { get; set; }
 
-        /// <summary>
-        /// How many items errored
-        /// </summary>
-        public int ErrorCount { get; set; }
+    public int ErrorCount { get; set; }
 
-        /// <summary>
-        /// A message
-        /// </summary>
-        public string Message => $"Translated {TranslationCount} out of {DictionaryCount} items with {ErrorCount} errors";
-    }
+    public int SkippedCount { get; set; }
+
+    public string Message => $"Translated {TranslationCount} out of {DictionaryCount} items with {ErrorCount} errors";
 }

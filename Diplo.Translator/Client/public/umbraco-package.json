@@ -1,0 +1,14 @@
+{
+  "$schema": "../../../../Diplo.Translator.Testsite/umbraco-package-schema.json",
+  "name": "Diplo.Translator",
+  "version": "17.0.0",
+  "allowTelemetry": true,
+  "extensions": [
+    {
+      "type": "backofficeEntryPoint",
+      "alias": "Diplo.Translator.EntryPoint",
+      "name": "Diplo Translator Entry Point",
+      "js": "/App_Plugins/DiploTranslator/index.js"
+    }
+  ]
+}

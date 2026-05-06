@@ -1,16 +1,13 @@
-﻿using Diplo.Translator.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Diplo.Translator.Models;
 using Umbraco.Cms.Core.Models;
 
-namespace Diplo.Translator.Services
+namespace Diplo.Translator.Services;
+
+public interface IDictionaryTranslationService
 {
-    public interface IDictionaryTranslationService
-    {
-        IEnumerable<IDictionaryItem> GetAllDictionaryItems();
+    IReadOnlyCollection<IDictionaryItem> GetAllDictionaryItems();
 
-        IEnumerable<ILanguage> GetAllLanguages();
+    IReadOnlyCollection<ILanguage> GetAllLanguages();
 
-        Task<DictionaryTranslationResponse> TranslateDictionary(string clientId, string fromCulture = null, bool overwrite = false);
-    }
+    Task<DictionaryTranslationResponse> TranslateDictionaryAsync(TranslationJob job, CancellationToken cancellationToken = default);
 }

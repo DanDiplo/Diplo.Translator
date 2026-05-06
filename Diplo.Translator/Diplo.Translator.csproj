@@ -1,51 +1,53 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ContentTargetFolders>.</ContentTargetFolders>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
     <Product>Diplo.Translator</Product>
     <PackageId>Diplo.Translator</PackageId>
     <Title>Diplo Translator for Umbraco</Title>
-	<Version>10.0.1</Version>
-    <Description>Umbraco 10 package that adds AI-based translation to the Dictionary section of Umbraco allowing you to translate all items with a single button click.</Description>
-    <PackageTags>umbraco plugin package translation dictionary translator umbraco-marketplace</PackageTags>
+    <VersionPrefix>17.0.0</VersionPrefix>
+    <Version>$(VersionPrefix)</Version>
+    <Description>Umbraco 17 package that uses Umbraco.AI to translate Dictionary items.</Description>
+    <PackageTags>umbraco plugin package translation dictionary translator ai umbraco-marketplace</PackageTags>
     <Company>DanDiplo</Company>
     <Copyright>Dan 'Diplo' Booth</Copyright>
     <PackageProjectUrl>https://github.com/DanDiplo/Diplo.Translator</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DanDiplo/Diplo.Translator</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Umbraco marketplace compatability</PackageReleaseNotes>
+    <PackageReleaseNotes>Umbraco 17 / .NET 10 rewrite. Translation now uses Umbraco.AI.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Authors>DanDiplo</Authors>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <CompressionEnabled>false</CompressionEnabled>
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="10.0.1" />
-    <PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="10.0.1" />
+    <PackageReference Include="Umbraco.Cms.Api.Common" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" />
+    <PackageReference Include="Umbraco.Cms.Core" />
+    <PackageReference Include="Umbraco.Cms.Infrastructure" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" />
+    <PackageReference Include="Umbraco.AI" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="App_Plugins\Diplo.Translator\**">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    </Content>
-    <None Include="build\**">
-      <Pack>true</Pack>
-      <PackagePath>buildTransitive</PackagePath>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="App_Plugins\Diplo.Translator\Dictionary.html" />
-    <None Remove="App_Plugins\Diplo.Translator\Diplo.Translate.DictController.js" />
-    <None Remove="App_Plugins\Diplo.Translator\Diplo.Translate.Hub.js" />
-    <None Remove="App_Plugins\Diplo.Translator\Diplo.Translate.Resources.js" />
-    <None Remove="umbraco-marketplace.json" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <Compile Remove="Client\**" />
+    <Content Remove="Client\**" />
+    <None Remove="Client\**" />
+    <EmbeddedResource Remove="Client\**" />
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+    <None Include="Client\vite.config.ts" Pack="false" />
+    <None Include="Client\tsconfig.json" Pack="false" />
+    <None Include="Client\package.json" Pack="false" />
+    <None Include="Client\src\**\*" Pack="false" />
     <None Include="..\Images\icon.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
@@ -55,4 +57,18 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+
+  <Target Name="RestoreClientPackages" BeforeTargets="BuildClient" Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)\Client" Command="npm ci" />
+  </Target>
+
+  <Target Name="BuildClient" BeforeTargets="PrepareForBuild">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)\Client" Command="npm run build" />
+  </Target>
+
+  <Target Name="BuildClientForPack" BeforeTargets="Pack">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)\Client" Command="npm ci" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)\Client" Command="npm run build" />
+  </Target>
+
 </Project>

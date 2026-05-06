@@ -1,142 +1,150 @@
-﻿using Diplo.Translator.Hubs;
 using Diplo.Translator.Models;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Extensions;
 
-namespace Diplo.Translator.Services
+namespace Diplo.Translator.Services;
+
+public sealed class DictionaryTranslationService : IDictionaryTranslationService
 {
-    /// <summary>
-    /// Service to translate dictionary items and get related data
-    /// </summary>
-    public class DictionaryTranslationService : IDictionaryTranslationService
+    private readonly ITranslationService translationService;
+    private readonly ILocalizationService localizationService;
+    private readonly ILogger<DictionaryTranslationService> logger;
+
+    public DictionaryTranslationService(
+        ILocalizationService localizationService,
+        ITranslationService translationService,
+        ILogger<DictionaryTranslationService> logger)
     {
-        private readonly ITranslationService translationService;
-        private readonly ILocalizationService localizationService;
-        private readonly ILogger<DictionaryTranslationService> logger;
-        private readonly IHubContext<DiploHub> hubContext;
-        private IEnumerable<ILanguage> _languages;
+        this.localizationService = localizationService;
+        this.translationService = translationService;
+        this.logger = logger;
+    }
 
-        public DictionaryTranslationService(ILocalizationService localizationService, ITranslationService translationService, ILogger<DictionaryTranslationService> logger, IHubContext<DiploHub> hubContext)
+    public IReadOnlyCollection<IDictionaryItem> GetAllDictionaryItems()
+    {
+        var rootDictionary = localizationService.GetRootDictionaryItems().ToList();
+        return rootDictionary
+            .Concat(rootDictionary.SelectMany(r => localizationService.GetDictionaryItemDescendants(r.Key)))
+            .ToList();
+    }
+
+    public IReadOnlyCollection<ILanguage> GetAllLanguages()
+        => localizationService.GetAllLanguages().ToList();
+
+    public async Task<DictionaryTranslationResponse> TranslateDictionaryAsync(TranslationJob job, CancellationToken cancellationToken = default)
+    {
+        var response = new DictionaryTranslationResponse();
+        var languages = GetAllLanguages();
+        var fromLanguage = languages.FirstOrDefault(x => x.IsoCode.InvariantEquals(job.FromCulture));
+
+        if (fromLanguage is null)
         {
-            this.localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
-            this.translationService = translationService ?? throw new ArgumentNullException(nameof(translationService));
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
+            throw new InvalidOperationException($"Language '{job.FromCulture}' was not found.");
         }
 
-        /// <summary>
-        /// Gets all dictionary items from Umbraco
-        /// </summary>
-        public IEnumerable<IDictionaryItem> GetAllDictionaryItems()
+        var dictionaryItems = GetAllDictionaryItems();
+        response.DictionaryCount = dictionaryItems.Count;
+        job.Progress.DictionaryCount = dictionaryItems.Count;
+        job.SetStatus(TranslationJobStatus.Running, "Translating dictionary items...");
+
+        foreach (var entry in dictionaryItems)
         {
-            var rootDictionary = this.localizationService.GetRootDictionaryItems();
-            return rootDictionary.Concat(rootDictionary.SelectMany(r => localizationService.GetDictionaryItemDescendants(r.Key)));
-        }
+            cancellationToken.ThrowIfCancellationRequested();
+            job.Progress.ProcessedItemCount++;
+            job.SetCurrentItem(entry.ItemKey);
 
-        /// <summary>
-        /// Gets all configured languages from Umbraco
-        /// </summary>
-        public IEnumerable<ILanguage> GetAllLanguages()
-        {
-            if (_languages == null)
+            foreach (var lang in languages)
             {
-                _languages = this.localizationService.GetAllLanguages().ToList();
-            }
+                cancellationToken.ThrowIfCancellationRequested();
 
-            return _languages;
-        }
-
-        /// <summary>
-        /// Performs the translation and outputs to signalR
-        /// </summary>
-        /// <param name="clientId">The signlaR client ID</param>
-        /// <param name="fromCulture">The culture to translate from</param>
-        /// <param name="overwrite">Whether to overwrite existing values</param>
-        /// <returns>A response object</returns>
-        public async Task<DictionaryTranslationResponse> TranslateDictionary(string clientId, string fromCulture = null, bool overwrite = false)
-        {
-            var response = new DictionaryTranslationResponse();
-            var hubClient = new DiploHubClientService(hubContext, clientId);
-            await hubClient.SendAlertAsync(new Alert("Translating..."));
-            ILanguage fromLanguage = null;
-
-            var languages = this.GetAllLanguages();
-
-            if (!string.IsNullOrEmpty(fromCulture))
-            {
-                fromLanguage = languages.FirstOrDefault(x => x.IsoCode.InvariantEquals(fromCulture));
-            }
-
-            if (fromLanguage == null)
-            {
-                fromLanguage = languages.First(x => x.IsDefault);
-            }
-
-            var dictionaryItems = this.GetAllDictionaryItems();
-
-            response.DictionaryCount = dictionaryItems.Count();
-
-            foreach (var entry in dictionaryItems)
-            {
-                foreach (var lang in languages)
+                if (lang.Id == fromLanguage.Id)
                 {
-                    var translation = entry.Translations.FirstOrDefault(x => x.LanguageId == lang.Id);
-                    var fromTranslation = entry.Translations.FirstOrDefault(x => x.LanguageId == fromLanguage.Id);
+                    continue;
+                }
 
-                    if (fromTranslation != null && !string.IsNullOrEmpty(fromTranslation.Value))
-                    {
-                        if (translation == null || string.IsNullOrEmpty(translation.Value) || overwrite)
-                        {
-                            string translatedText = await this.TranslateDictionaryItem(fromTranslation.Value, lang.CultureInfo.Name, fromLanguage.CultureInfo.Name, hubClient, response);
+                var translation = entry.Translations.FirstOrDefault(x => x.LanguageIsoCode.InvariantEquals(lang.IsoCode));
+                var fromTranslation = entry.Translations.FirstOrDefault(x => x.LanguageIsoCode.InvariantEquals(fromLanguage.IsoCode));
 
-                            if (!string.IsNullOrEmpty(translatedText))
-                            {
-                                try
-                                {
-                                    this.localizationService.AddOrUpdateDictionaryValue(entry, lang, translatedText);
-                                    this.localizationService.Save(entry);
-                                    await hubClient.SendAlertAsync(new Alert(AlertType.Success, $"{lang.CultureInfo.Name}: {fromTranslation.Value}' => '{translatedText}"));
-                                }
-                                catch (Exception ex)
-                                {
-                                    var message = $"Error translating {lang.CultureInfo.Name}: {fromTranslation.Value}";
-                                    logger.LogError(message, ex);
-                                    await hubClient.SendAlertAsync(new Alert(AlertType.Error, message));
-                                    response.ErrorCount++;
-                                }
-                            }
-                        }
-                    }
+                if (string.IsNullOrWhiteSpace(fromTranslation?.Value))
+                {
+                    response.SkippedCount++;
+                    job.Progress.SkippedCount++;
+                    continue;
+                }
+
+                if (translation is not null && !string.IsNullOrWhiteSpace(translation.Value) && !job.Overwrite)
+                {
+                    response.SkippedCount++;
+                    job.Progress.SkippedCount++;
+                    continue;
+                }
+
+                    var targetCulture = lang.CultureInfo?.Name ?? lang.IsoCode;
+                    var sourceCulture = fromLanguage.CultureInfo?.Name ?? fromLanguage.IsoCode;
+
+                    var translatedText = await TranslateDictionaryItemAsync(
+                        fromTranslation.Value,
+                        targetCulture,
+                        sourceCulture,
+                        job,
+                        response,
+                        cancellationToken);
+
+                if (string.IsNullOrWhiteSpace(translatedText))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    localizationService.AddOrUpdateDictionaryValue(entry, lang, translatedText);
+                    localizationService.Save(entry);
+                    job.AddMessage($"Translated '{entry.ItemKey}' to {targetCulture}.");
+                }
+                catch (Exception ex)
+                {
+                    var message = $"Error saving '{entry.ItemKey}' for {targetCulture}.";
+                    logger.LogError(ex, message);
+                    job.AddError(message);
+                    response.ErrorCount++;
+                    job.Progress.ErrorCount++;
                 }
             }
-
-            return response;
         }
 
-        private async Task<string> TranslateDictionaryItem(string fromText, string to, string from, DiploHubClientService hubClient, DictionaryTranslationResponse response)
+        return response;
+    }
+
+    private async Task<string?> TranslateDictionaryItemAsync(
+        string fromText,
+        string to,
+        string from,
+        TranslationJob job,
+        DictionaryTranslationResponse response,
+        CancellationToken cancellationToken)
+    {
+        job.Progress.AttemptedTranslationCount++;
+        job.SetStatus(TranslationJobStatus.Running, $"Translating {from} to {to}...");
+
+        var result = await translationService.TranslateAsync(fromText, to, from, cancellationToken);
+
+        if (result.IsSuccess && !string.IsNullOrWhiteSpace(result.Text))
         {
-            var result = await translationService.TranslateAsync(fromText, to, from: from);
-
-            if (result.IsSuccess)
-            {
-                response.TranslationCount++;
-                return result.Text;
-            }
-            else
-            {
-                hubClient.SendAlert(new Alert(AlertType.Error, result.Message));
-                logger.LogError(result.Message);
-                response.ErrorCount++;
-            }
-
-            return null;
+            response.TranslationCount++;
+            job.Progress.TranslationCount++;
+            return result.Text;
         }
+
+        var message = string.IsNullOrWhiteSpace(result.Message)
+            ? $"Translation from {from} to {to} returned no text."
+            : result.Message;
+
+        logger.LogError("{TranslationError}", message);
+        job.AddError(message!);
+        response.ErrorCount++;
+        job.Progress.ErrorCount++;
+        return null;
     }
 }
