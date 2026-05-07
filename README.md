@@ -2,14 +2,13 @@
 
 Diplo Translator is an Umbraco 17 package for translating Umbraco Dictionary items from the backoffice.
 
-This version targets **Umbraco 17** and **.NET 10**. Translation is provided through [Umbraco.AI](https://docs.umbraco.com/ai-in-umbraco), so the package no longer talks directly to Microsoft Translator or stores Microsoft Translator API credentials.
-
+This version targets **Umbraco 17** and **.NET 10**. Translation is provided through the free [Umbraco.AI](https://docs.umbraco.com/ai-in-umbraco), so the package no longer talks directly to Microsoft Translator or stores Microsoft Translator API credentials.
 ## Features
 
 - Adds a **Translate** action to the Dictionary tree.
 - Translates missing Dictionary values from a selected source language.
 - Optional overwrite mode for replacing existing translated values.
-- Uses Umbraco.AI chat profiles, including the host site's default profile.
+- Uses [Umbraco.AI](https://marketplace.umbraco.com/package/umbraco.ai) chat profiles, including the host site's default profile.
 - Runs translations as a background job with progress polling in the backoffice modal.
 - Continues processing if an individual Dictionary item fails and reports per-item errors.
 
@@ -17,7 +16,7 @@ This version targets **Umbraco 17** and **.NET 10**. Translation is provided thr
 
 - Umbraco 17
 - .NET 10
-- An Umbraco.AI provider installed and configured in the host site, for example `Umbraco.AI.OpenAI`
+- An [Umbraco.AI](https://marketplace.umbraco.com/category/artificial-intelligence?supportsUmbracoVersionNumber=17.3&maintainedBy=hq) provider installed and configured in the host site, for example [Umbraco.AI.OpenAI](https://marketplace.umbraco.com/package/umbraco.ai.openai)
 - At least two languages configured in Umbraco
 
 ## Installation
@@ -36,7 +35,9 @@ The package ships its backoffice assets under:
 
 ## Umbraco.AI Setup
 
-Configure Umbraco.AI in the host site as normal. Diplo Translator uses `IAIChatService`, so it will use the configured chat provider and chat profile from Umbraco.AI.
+Configure [Umbraco.AI](https://marketplace.umbraco.com/package/umbraco.ai) in the host site as normal with at least one provider.
+
+Diplo Translator uses `IAIChatService`, so it will use the configured chat provider and chat profile from Umbraco.AI.
 
 By default, the package allows Umbraco.AI to resolve the default chat profile.
 
@@ -54,9 +55,9 @@ Leave `ChatProfileAlias` empty or remove it to use the default Umbraco.AI chat p
 
 ## Suggested AI Profile
 
-Use a model/profile that is good at short, literal translation. For small Dictionary values, a compact model is usually enough.
+Use a model/profile that is good at short, literal translation. For small Dictionary values, a compact model is usually enough. For instance, if using [Open.AI](https://openai.com/) then use `gpt-4.1-nano` which is fast and very efficient.
 
-A useful system prompt for the Umbraco.AI profile is:
+A useful system prompt for the `Umbraco.AI` profile is:
 
 ```text
 You are a strict translation engine. Return only the translated text. Do not add markdown, commentary, labels, surrounding quotes, or explanations. Preserve placeholders, dictionary tokens, URLs, HTML tags, whitespace-sensitive fragments, and formatting markers.
