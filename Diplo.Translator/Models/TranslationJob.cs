@@ -1,17 +1,18 @@
 namespace Diplo.Translator.Models;
 
-public sealed class TranslationJob
+public sealed class TranslationJob : IDisposable
 {
     private readonly CancellationTokenSource cancellationTokenSource = new();
     private readonly object syncRoot = new();
     private readonly Queue<string> messages = new();
     private readonly Queue<string> errors = new();
 
-    public TranslationJob(string fromCulture, bool overwrite)
+    public TranslationJob(string fromCulture, bool overwrite, Guid userKey)
     {
         Id = Guid.NewGuid();
         FromCulture = fromCulture;
         Overwrite = overwrite;
+        UserKey = userKey;
         CreatedUtc = DateTimeOffset.UtcNow;
     }
 
@@ -20,6 +21,8 @@ public sealed class TranslationJob
     public string FromCulture { get; }
 
     public bool Overwrite { get; }
+
+    public Guid UserKey { get; }
 
     public DateTimeOffset CreatedUtc { get; }
 
@@ -101,4 +104,7 @@ public sealed class TranslationJob
         SetStatus(TranslationJobStatus.Cancelled, "Translation job cancelled.");
         cancellationTokenSource.Cancel();
     }
+
+    public void Dispose()
+        => cancellationTokenSource.Dispose();
 }

@@ -9,42 +9,48 @@ namespace Diplo.Translator.Services;
 public sealed class DictionaryTranslationService : IDictionaryTranslationService
 {
     private readonly ITranslationService translationService;
-    private readonly ILocalizationService localizationService;
+    private readonly IDictionaryItemService dictionaryItemService;
+    private readonly ILanguageService languageService;
     private readonly ILogger<DictionaryTranslationService> logger;
 
     public DictionaryTranslationService(
-        ILocalizationService localizationService,
+        IDictionaryItemService dictionaryItemService,
+        ILanguageService languageService,
         ITranslationService translationService,
         ILogger<DictionaryTranslationService> logger)
     {
-        this.localizationService = localizationService;
+        this.dictionaryItemService = dictionaryItemService;
+        this.languageService = languageService;
         this.translationService = translationService;
         this.logger = logger;
     }
 
-    public IReadOnlyCollection<IDictionaryItem> GetAllDictionaryItems()
+    public async Task<IReadOnlyCollection<IDictionaryItem>> GetAllDictionaryItemsAsync()
     {
-        var rootDictionary = localizationService.GetRootDictionaryItems().ToList();
-        return rootDictionary
-            .Concat(rootDictionary.SelectMany(r => localizationService.GetDictionaryItemDescendants(r.Key)))
-            .ToList();
+        var dictionaryItems = (await dictionaryItemService.GetAtRootAsync()).ToList();
+
+        foreach (var rootItem in dictionaryItems.ToArray())
+        {
+            dictionaryItems.AddRange(await dictionaryItemService.GetDescendantsAsync(rootItem.Key, string.Empty));
+        }
+
+        return dictionaryItems;
     }
 
-    public IReadOnlyCollection<ILanguage> GetAllLanguages()
-        => localizationService.GetAllLanguages().ToList();
+    public async Task<IReadOnlyCollection<ILanguage>> GetAllLanguagesAsync()
+        => (await languageService.GetAllAsync()).ToList();
 
     public async Task<DictionaryTranslationResponse> TranslateDictionaryAsync(TranslationJob job, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(job);
+
         var response = new DictionaryTranslationResponse();
-        var languages = GetAllLanguages();
-        var fromLanguage = languages.FirstOrDefault(x => x.IsoCode.InvariantEquals(job.FromCulture));
+        var languages = await GetAllLanguagesAsync();
+        var fromLanguage = languages.FirstOrDefault(x => x.IsoCode.InvariantEquals(job.FromCulture)) ?? throw new InvalidOperationException($"Language '{job.FromCulture}' was not found.");
+        var targetLanguages = languages.Where(lang => lang.Id != fromLanguage.Id).ToList();
+        var sourceCulture = GetCultureName(fromLanguage);
+        var dictionaryItems = await GetAllDictionaryItemsAsync();
 
-        if (fromLanguage is null)
-        {
-            throw new InvalidOperationException($"Language '{job.FromCulture}' was not found.");
-        }
-
-        var dictionaryItems = GetAllDictionaryItems();
         response.DictionaryCount = dictionaryItems.Count;
         job.Progress.DictionaryCount = dictionaryItems.Count;
         job.SetStatus(TranslationJobStatus.Running, "Translating dictionary items...");
@@ -54,67 +60,99 @@ public sealed class DictionaryTranslationService : IDictionaryTranslationService
             cancellationToken.ThrowIfCancellationRequested();
             job.Progress.ProcessedItemCount++;
             job.SetCurrentItem(entry.ItemKey);
+            var translatedCultures = new List<string>();
+            var fromText = GetTranslationValue(entry, fromLanguage.IsoCode);
 
-            foreach (var lang in languages)
+            if (string.IsNullOrWhiteSpace(fromText))
+            {
+                AddSkipped(response, job, targetLanguages.Count);
+                continue;
+            }
+
+            foreach (var lang in targetLanguages)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                if (lang.Id == fromLanguage.Id)
+                var existingValue = GetTranslationValue(entry, lang.IsoCode);
+
+                if (!string.IsNullOrWhiteSpace(existingValue) && !job.Overwrite)
                 {
+                    AddSkipped(response, job);
                     continue;
                 }
 
-                var translation = entry.Translations.FirstOrDefault(x => x.LanguageIsoCode.InvariantEquals(lang.IsoCode));
-                var fromTranslation = entry.Translations.FirstOrDefault(x => x.LanguageIsoCode.InvariantEquals(fromLanguage.IsoCode));
+                var targetCulture = GetCultureName(lang);
 
-                if (string.IsNullOrWhiteSpace(fromTranslation?.Value))
-                {
-                    response.SkippedCount++;
-                    job.Progress.SkippedCount++;
-                    continue;
-                }
-
-                if (translation is not null && !string.IsNullOrWhiteSpace(translation.Value) && !job.Overwrite)
-                {
-                    response.SkippedCount++;
-                    job.Progress.SkippedCount++;
-                    continue;
-                }
-
-                    var targetCulture = lang.CultureInfo?.Name ?? lang.IsoCode;
-                    var sourceCulture = fromLanguage.CultureInfo?.Name ?? fromLanguage.IsoCode;
-
-                    var translatedText = await TranslateDictionaryItemAsync(
-                        fromTranslation.Value,
-                        targetCulture,
-                        sourceCulture,
-                        job,
-                        response,
-                        cancellationToken);
+                var translatedText = await TranslateDictionaryItemAsync(
+                    fromText,
+                    targetCulture,
+                    sourceCulture,
+                    job,
+                    response,
+                    cancellationToken);
 
                 if (string.IsNullOrWhiteSpace(translatedText))
                 {
                     continue;
                 }
 
-                try
-                {
-                    localizationService.AddOrUpdateDictionaryValue(entry, lang, translatedText);
-                    localizationService.Save(entry);
-                    job.AddMessage($"Translated '{entry.ItemKey}' to {targetCulture}.");
-                }
-                catch (Exception ex)
-                {
-                    var message = $"Error saving '{entry.ItemKey}' for {targetCulture}.";
-                    logger.LogError(ex, message);
-                    job.AddError(message);
-                    response.ErrorCount++;
-                    job.Progress.ErrorCount++;
-                }
+                entry.AddOrUpdateDictionaryValue(lang, translatedText);
+                translatedCultures.Add(targetCulture);
             }
+
+            if (translatedCultures.Count is 0)
+            {
+                continue;
+            }
+
+            await SaveDictionaryItemAsync(entry, translatedCultures, job, response);
         }
 
         return response;
+    }
+
+    private static string GetCultureName(ILanguage language)
+        => language.CultureInfo?.Name ?? language.IsoCode;
+
+    private static string? GetTranslationValue(IDictionaryItem entry, string isoCode)
+        => entry.Translations.FirstOrDefault(x => x.LanguageIsoCode.InvariantEquals(isoCode))?.Value;
+
+    private static void AddSkipped(DictionaryTranslationResponse response, TranslationJob job, int count = 1)
+    {
+        if (count <= 0)
+        {
+            return;
+        }
+
+        response.SkippedCount += count;
+        job.Progress.SkippedCount += count;
+    }
+
+    private async Task SaveDictionaryItemAsync(
+        IDictionaryItem entry,
+        IReadOnlyCollection<string> translatedCultures,
+        TranslationJob job,
+        DictionaryTranslationResponse response)
+    {
+        try
+        {
+            var result = await dictionaryItemService.UpdateAsync(entry, job.UserKey);
+
+            if (result.Success is false)
+            {
+                throw new InvalidOperationException($"Dictionary item update failed with status '{result.Status}'.");
+            }
+
+            job.AddMessage($"Translated '{entry.ItemKey}' to {string.Join(", ", translatedCultures)}.");
+        }
+        catch (Exception ex)
+        {
+            var message = $"Error saving '{entry.ItemKey}'.";
+            logger.LogError(ex, message);
+            job.AddError(message);
+            response.ErrorCount++;
+            job.Progress.ErrorCount++;
+        }
     }
 
     private async Task<string?> TranslateDictionaryItemAsync(

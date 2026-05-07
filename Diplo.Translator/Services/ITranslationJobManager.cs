@@ -4,7 +4,7 @@ namespace Diplo.Translator.Services;
 
 public interface ITranslationJobManager
 {
-    TranslationJob Start(TranslationJobRequest request);
+    bool TryStart(TranslationJobRequest request, Guid userKey, out TranslationJob job);
 
     TranslationJob? Get(Guid jobId);
 

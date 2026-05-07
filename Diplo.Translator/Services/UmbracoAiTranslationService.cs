@@ -49,7 +49,7 @@ public sealed class UmbracoAiTranslationService : ITranslationService
                 messages,
                 cancellationToken);
 
-            var translatedText = response.Text?.Trim();
+            var translatedText = response.Text;
             return new TranslationResponse
             {
                 IsSuccess = !string.IsNullOrWhiteSpace(translatedText),
@@ -58,6 +58,10 @@ public sealed class UmbracoAiTranslationService : ITranslationService
                 To = to,
                 Message = string.IsNullOrWhiteSpace(translatedText) ? "The AI provider returned an empty translation." : null
             };
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

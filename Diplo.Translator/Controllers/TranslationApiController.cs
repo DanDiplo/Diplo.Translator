@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Web.Common.Authorization;
@@ -20,22 +21,25 @@ public sealed class TranslationApiController : ManagementApiControllerBase
 {
     private readonly IDictionaryTranslationService dictionaryTranslationService;
     private readonly ITranslationJobManager jobManager;
+    private readonly IBackOfficeSecurityAccessor backOfficeSecurityAccessor;
     private readonly TranslatorConfig config;
 
     public TranslationApiController(
         IDictionaryTranslationService dictionaryTranslationService,
         ITranslationJobManager jobManager,
+        IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         IOptions<TranslatorConfig> config)
     {
         this.dictionaryTranslationService = dictionaryTranslationService;
         this.jobManager = jobManager;
+        this.backOfficeSecurityAccessor = backOfficeSecurityAccessor;
         this.config = config.Value;
     }
 
     [HttpGet("languages")]
     [ProducesResponseType<IEnumerable<TranslatorLanguageDto>>(StatusCodes.Status200OK)]
-    public ActionResult<IEnumerable<TranslatorLanguageDto>> GetLanguages()
-        => Ok(dictionaryTranslationService.GetAllLanguages()
+    public async Task<ActionResult<IEnumerable<TranslatorLanguageDto>>> GetLanguages()
+        => Ok((await dictionaryTranslationService.GetAllLanguagesAsync())
             .Select(language => new TranslatorLanguageDto(
                 language.Id,
                 language.IsoCode,
@@ -53,14 +57,16 @@ public sealed class TranslationApiController : ManagementApiControllerBase
     [HttpPost("jobs")]
     [ProducesResponseType<TranslationJobCreatedDto>(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<TranslationJobCreatedDto> StartJob([FromBody] TranslationJobRequest request)
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TranslationJobCreatedDto>> StartJob([FromBody] TranslationJobRequest request)
     {
         if (request is null || string.IsNullOrWhiteSpace(request.FromCulture))
         {
             return BadRequest("A source culture is required.");
         }
 
-        var language = dictionaryTranslationService.GetAllLanguages()
+        var language = (await dictionaryTranslationService.GetAllLanguagesAsync())
             .FirstOrDefault(x => x.IsoCode.InvariantEquals(request.FromCulture));
 
         if (language is null)
@@ -68,7 +74,17 @@ public sealed class TranslationApiController : ManagementApiControllerBase
             return BadRequest($"Language '{request.FromCulture}' was not found.");
         }
 
-        var job = jobManager.Start(request);
+        var userKey = backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Key;
+        if (userKey is null)
+        {
+            return Unauthorized();
+        }
+
+        if (!jobManager.TryStart(request, userKey.Value, out var job))
+        {
+            return Conflict("A dictionary translation job is already running.");
+        }
+
         return Accepted(new TranslationJobCreatedDto(job.Id));
     }
 

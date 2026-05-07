@@ -7,7 +7,10 @@ namespace Diplo.Translator.Services;
 
 public sealed class TranslationJobManager : ITranslationJobManager
 {
+    private static readonly TimeSpan CompletedJobRetention = TimeSpan.FromMinutes(30);
+
     private readonly ConcurrentDictionary<Guid, TranslationJob> jobs = new();
+    private readonly object startLock = new();
     private readonly IServiceScopeFactory serviceScopeFactory;
     private readonly ILogger<TranslationJobManager> logger;
 
@@ -17,34 +20,59 @@ public sealed class TranslationJobManager : ITranslationJobManager
         this.logger = logger;
     }
 
-    public TranslationJob Start(TranslationJobRequest request)
+    public bool TryStart(TranslationJobRequest request, Guid userKey, out TranslationJob job)
     {
-        var job = new TranslationJob(request.FromCulture, request.Overwrite);
-        jobs[job.Id] = job;
+        ArgumentNullException.ThrowIfNull(request);
 
-        _ = Task.Run(() => RunAsync(job));
-        return job;
+        lock (startLock)
+        {
+            PruneCompletedJobs();
+
+            if (jobs.Values.Any(IsActive))
+            {
+                job = null!;
+                return false;
+            }
+
+            job = new TranslationJob(request.FromCulture, request.Overwrite, userKey);
+            jobs[job.Id] = job;
+        }
+
+        var startedJob = job;
+        _ = Task.Run(() => RunAsync(startedJob));
+        return true;
     }
 
     public TranslationJob? Get(Guid jobId)
-        => jobs.TryGetValue(jobId, out var job) ? job : null;
+    {
+        lock (startLock)
+        {
+            PruneCompletedJobs();
+            return jobs.TryGetValue(jobId, out var job) ? job : null;
+        }
+    }
 
     public bool Cancel(Guid jobId)
     {
-        if (!jobs.TryGetValue(jobId, out var job))
+        lock (startLock)
         {
-            return false;
-        }
+            PruneCompletedJobs();
 
-        job.Cancel();
-        return true;
+            if (!jobs.TryGetValue(jobId, out var job))
+            {
+                return false;
+            }
+
+            job.Cancel();
+            return true;
+        }
     }
 
     private async Task RunAsync(TranslationJob job)
     {
         try
         {
-            using var scope = serviceScopeFactory.CreateScope();
+            await using var scope = serviceScopeFactory.CreateAsyncScope();
             var service = scope.ServiceProvider.GetRequiredService<IDictionaryTranslationService>();
             await service.TranslateDictionaryAsync(job, job.CancellationToken);
 
@@ -52,20 +80,63 @@ public sealed class TranslationJobManager : ITranslationJobManager
             {
                 var status = job.Progress.ErrorCount > 0 ? TranslationJobStatus.CompletedWithErrors : TranslationJobStatus.Completed;
                 job.SetStatus(status, job.Progress.Message);
-                job.CompletedUtc = DateTimeOffset.UtcNow;
             }
         }
         catch (OperationCanceledException)
         {
             job.SetStatus(TranslationJobStatus.Cancelled, "Translation job cancelled.");
-            job.CompletedUtc = DateTimeOffset.UtcNow;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Translation job {JobId} failed.", job.Id);
             job.AddError(ex.Message);
             job.SetStatus(TranslationJobStatus.Failed, ex.Message);
-            job.CompletedUtc = DateTimeOffset.UtcNow;
+        }
+        finally
+        {
+            job.CompletedUtc ??= DateTimeOffset.UtcNow;
+            _ = RemoveAfterRetentionAsync(job.Id, job.CompletedUtc.Value);
+        }
+    }
+
+    private void PruneCompletedJobs()
+    {
+        var removeBefore = DateTimeOffset.UtcNow.Subtract(CompletedJobRetention);
+
+        foreach (var job in jobs.Values.Where(job => job.CompletedUtc is not null && job.CompletedUtc < removeBefore))
+        {
+            if (jobs.TryRemove(job.Id, out var removedJob))
+            {
+                removedJob.Dispose();
+            }
+        }
+    }
+
+    private static bool IsActive(TranslationJob job)
+        => job.CompletedUtc is null;
+
+    private async Task RemoveAfterRetentionAsync(Guid jobId, DateTimeOffset completedUtc)
+    {
+        try
+        {
+            await Task.Delay(CompletedJobRetention);
+
+            if (!jobs.TryGetValue(jobId, out var job) || job.CompletedUtc != completedUtc)
+            {
+                return;
+            }
+
+            lock (startLock)
+            {
+                if (jobs.TryGetValue(jobId, out job) && job.CompletedUtc == completedUtc && jobs.TryRemove(jobId, out var removedJob))
+                {
+                    removedJob.Dispose();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not prune completed translation job {JobId}.", jobId);
         }
     }
 }

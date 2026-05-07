@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Info/">
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="Diplo.Translator.Testsite/Diplo.Translator.Testsite.csproj" />
+  <Project Path="Diplo.Translator/Diplo.Translator.csproj" />
+</Solution>

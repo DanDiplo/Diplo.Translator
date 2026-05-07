@@ -5,9 +5,9 @@ namespace Diplo.Translator.Services;
 
 public interface IDictionaryTranslationService
 {
-    IReadOnlyCollection<IDictionaryItem> GetAllDictionaryItems();
+    Task<IReadOnlyCollection<IDictionaryItem>> GetAllDictionaryItemsAsync();
 
-    IReadOnlyCollection<ILanguage> GetAllLanguages();
+    Task<IReadOnlyCollection<ILanguage>> GetAllLanguagesAsync();
 
     Task<DictionaryTranslationResponse> TranslateDictionaryAsync(TranslationJob job, CancellationToken cancellationToken = default);
 }
