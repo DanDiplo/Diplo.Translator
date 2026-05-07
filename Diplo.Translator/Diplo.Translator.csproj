@@ -18,10 +18,11 @@
     <PackageProjectUrl>https://github.com/DanDiplo/Diplo.Translator</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DanDiplo/Diplo.Translator</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <RepositoryBranch>v17</RepositoryBranch>
     <PackageReleaseNotes>Umbraco 17 / .NET 10 rewrite. Translation now uses Umbraco.AI.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>NuGet.md</PackageReadmeFile>
     <Authors>DanDiplo</Authors>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <CompressionEnabled>false</CompressionEnabled>
@@ -29,12 +30,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Umbraco.Cms.Api.Common" />
     <PackageReference Include="Umbraco.Cms.Api.Management" />
     <PackageReference Include="Umbraco.Cms.Core" />
-    <PackageReference Include="Umbraco.Cms.Infrastructure" />
     <PackageReference Include="Umbraco.Cms.Web.Common" />
-    <PackageReference Include="Umbraco.Cms.Web.Website" />
     <PackageReference Include="Umbraco.AI" />
   </ItemGroup>
 
@@ -53,6 +51,10 @@
       <PackagePath>\</PackagePath>
     </None>
     <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="NuGet.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>

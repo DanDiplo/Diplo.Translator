@@ -1,8 +1,11 @@
 # Diplo Translator for Umbraco
 
-Diplo Translator is an Umbraco 17 package for translating Umbraco Dictionary items from the backoffice.
+Diplo Translator is an Umbraco 17 package for AI translating Umbraco Dictionary items from the backoffice. You can quickly translate the entire Dictionary in just a couple of clicks using your AI model of choice!
 
 This version targets **Umbraco 17** and **.NET 10**. Translation is provided through the free [Umbraco.AI](https://docs.umbraco.com/ai-in-umbraco), so the package no longer talks directly to Microsoft Translator or stores Microsoft Translator API credentials.
+
+![Translate dictionary action in the Umbraco backoffice](Images/Translate-Dialog.PNG)
+
 ## Features
 
 - Adds a **Translate** action to the Dictionary tree.
@@ -35,7 +38,7 @@ The package ships its backoffice assets under:
 
 ## Umbraco.AI Setup
 
-Configure [Umbraco.AI](https://marketplace.umbraco.com/package/umbraco.ai) in the host site as normal with at least one provider.
+Configure [Umbraco.AI](https://docs.umbraco.com/ai-in-umbraco/getting-started/installation) in the host site as normal with at least one provider.
 
 Diplo Translator uses `IAIChatService`, so it will use the configured chat provider and chat profile from Umbraco.AI.
 
@@ -150,7 +153,25 @@ The backoffice modal uses these endpoints to load languages, start translation j
 - This v17 version replaces the old AngularJS backoffice integration with a Lit-based extension.
 - SignalR is no longer used; progress is reported through HTTP polling.
 - Microsoft Translator configuration is no longer used.
-- `ILocalizationService` is still used for Dictionary persistence in Umbraco 17, but Umbraco marks it obsolete for removal in Umbraco 18.
+- Dictionary items are read and saved through Umbraco's async dictionary and language services.
+
+## Screenshots
+
+### Start a Translation
+
+![Translate dictionary modal](Images/Translate-Dialog.PNG)
+
+### Track Progress
+
+![Translation progress modal](Images/progress.png)
+
+### Completion Summary
+
+![Translation completed notification](Images/translate_completed.png)
+
+### Refreshed Dictionary Overview
+
+![Dictionary overview after translation](Images/finished.png)
 
 ## Links
 

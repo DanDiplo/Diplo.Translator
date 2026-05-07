@@ -2,6 +2,7 @@
   <Folder Name="/Info/">
     <File Path="Diplo.Translator/NuGet.md" />
     <File Path="README.md" />
+    <File Path="umbraco-marketplace.json" />
   </Folder>
   <Project Path="Diplo.Translator.Testsite/Diplo.Translator.Testsite.csproj" />
   <Project Path="Diplo.Translator/Diplo.Translator.csproj" />
