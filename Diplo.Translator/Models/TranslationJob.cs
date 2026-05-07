@@ -6,6 +6,10 @@ public sealed class TranslationJob : IDisposable
     private readonly object syncRoot = new();
     private readonly Queue<string> messages = new();
     private readonly Queue<string> errors = new();
+    private readonly TranslationJobProgress progress = new();
+    private DateTimeOffset? completedUtc;
+    private TranslationJobStatus status = TranslationJobStatus.Pending;
+    private string statusMessage = "Waiting to start...";
 
     public TranslationJob(string fromCulture, bool overwrite, Guid userKey)
     {
@@ -26,13 +30,49 @@ public sealed class TranslationJob : IDisposable
 
     public DateTimeOffset CreatedUtc { get; }
 
-    public DateTimeOffset? CompletedUtc { get; set; }
+    public DateTimeOffset? CompletedUtc
+    {
+        get
+        {
+            lock (syncRoot)
+            {
+                return completedUtc;
+            }
+        }
+    }
 
-    public TranslationJobStatus Status { get; private set; } = TranslationJobStatus.Pending;
+    public TranslationJobStatus Status
+    {
+        get
+        {
+            lock (syncRoot)
+            {
+                return status;
+            }
+        }
+    }
 
-    public string StatusMessage { get; private set; } = "Waiting to start...";
+    public string StatusMessage
+    {
+        get
+        {
+            lock (syncRoot)
+            {
+                return statusMessage;
+            }
+        }
+    }
 
-    public TranslationJobProgress Progress { get; } = new();
+    public TranslationJobProgress Progress
+    {
+        get
+        {
+            lock (syncRoot)
+            {
+                return progress.Clone();
+            }
+        }
+    }
 
     public CancellationToken CancellationToken => cancellationTokenSource.Token;
 
@@ -60,15 +100,95 @@ public sealed class TranslationJob : IDisposable
 
     public void SetStatus(TranslationJobStatus status, string? message = null)
     {
-        Status = status;
-        if (!string.IsNullOrWhiteSpace(message))
+        lock (syncRoot)
         {
-            StatusMessage = message;
+            this.status = status;
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                statusMessage = message;
+            }
         }
     }
 
     public void SetCurrentItem(string? itemKey)
-        => Progress.CurrentItem = itemKey;
+    {
+        lock (syncRoot)
+        {
+            progress.CurrentItem = itemKey;
+        }
+    }
+
+    public void SetDictionaryCount(int count)
+    {
+        lock (syncRoot)
+        {
+            progress.DictionaryCount = count;
+        }
+    }
+
+    public void IncrementProcessedItemCount()
+    {
+        lock (syncRoot)
+        {
+            progress.ProcessedItemCount++;
+        }
+    }
+
+    public void IncrementAttemptedTranslationCount()
+    {
+        lock (syncRoot)
+        {
+            progress.AttemptedTranslationCount++;
+        }
+    }
+
+    public void IncrementTranslationCount()
+    {
+        lock (syncRoot)
+        {
+            progress.TranslationCount++;
+        }
+    }
+
+    public void IncrementSkippedCount(int count = 1)
+    {
+        if (count <= 0)
+        {
+            return;
+        }
+
+        lock (syncRoot)
+        {
+            progress.SkippedCount += count;
+        }
+    }
+
+    public void IncrementErrorCount()
+    {
+        lock (syncRoot)
+        {
+            progress.ErrorCount++;
+        }
+    }
+
+    public int ErrorCount
+    {
+        get
+        {
+            lock (syncRoot)
+            {
+                return progress.ErrorCount;
+            }
+        }
+    }
+
+    public void MarkCompleted()
+    {
+        lock (syncRoot)
+        {
+            completedUtc ??= DateTimeOffset.UtcNow;
+        }
+    }
 
     public void AddMessage(string message)
     {
@@ -96,12 +216,17 @@ public sealed class TranslationJob : IDisposable
 
     public void Cancel()
     {
-        if (Status is TranslationJobStatus.Completed or TranslationJobStatus.CompletedWithErrors or TranslationJobStatus.Failed or TranslationJobStatus.Cancelled)
+        lock (syncRoot)
         {
-            return;
+            if (status is TranslationJobStatus.Completed or TranslationJobStatus.CompletedWithErrors or TranslationJobStatus.Failed or TranslationJobStatus.Cancelled)
+            {
+                return;
+            }
+
+            status = TranslationJobStatus.Cancelled;
+            statusMessage = "Translation job cancelled.";
         }
 
-        SetStatus(TranslationJobStatus.Cancelled, "Translation job cancelled.");
         cancellationTokenSource.Cancel();
     }
 

@@ -12,14 +12,17 @@ import {
   type TranslatorLanguage,
   type TranslatorSettings
 } from "./api";
+import type { DiploTranslatorModalData } from "./translate-dictionary-modal.token";
 
 const COMPLETE_STATUSES = ["Completed", "CompletedWithErrors", "Failed", "Cancelled"];
+const SUCCESS_STATUSES = ["Completed", "CompletedWithErrors"];
 
 @customElement("diplo-translate-dictionary-modal")
-export class DiploTranslateDictionaryModalElement extends UmbModalBaseElement {
+export class DiploTranslateDictionaryModalElement extends UmbModalBaseElement<DiploTranslatorModalData, never> {
   #notificationContext?: UmbNotificationContext;
   #pollTimer?: number;
   #jobId?: string;
+  #hasRefreshedDictionaryView = false;
 
   @state()
   private _languages: TranslatorLanguage[] = [];
@@ -106,6 +109,7 @@ export class DiploTranslateDictionaryModalElement extends UmbModalBaseElement {
 
       if (COMPLETE_STATUSES.includes(this._job.status)) {
         this.#notifyComplete(this._job);
+        void this.#refreshDictionaryView(this._job);
         return;
       }
 
@@ -140,6 +144,15 @@ export class DiploTranslateDictionaryModalElement extends UmbModalBaseElement {
         message
       }
     });
+  }
+
+  async #refreshDictionaryView(job: TranslationJob): Promise<void> {
+    if (this.#hasRefreshedDictionaryView || !SUCCESS_STATUSES.includes(job.status)) {
+      return;
+    }
+
+    this.#hasRefreshedDictionaryView = true;
+    await this.data?.onComplete?.();
   }
 
   #errorMessage(error: unknown): string {
@@ -229,6 +242,7 @@ export class DiploTranslateDictionaryModalElement extends UmbModalBaseElement {
 
   override render() {
     const hasRunningJob = this._job !== undefined && !COMPLETE_STATUSES.includes(this._job.status);
+    const hasSuccessfulJob = this._job !== undefined && SUCCESS_STATUSES.includes(this._job.status);
 
     return html`
       <umb-body-layout headline="Translate dictionary">
@@ -236,7 +250,9 @@ export class DiploTranslateDictionaryModalElement extends UmbModalBaseElement {
         <uui-button slot="actions" type="button" label="Close" look="secondary" @click=${() => this.modalContext?.reject()}></uui-button>
         ${hasRunningJob
           ? html`<uui-button slot="actions" type="button" label="Cancel" look="secondary" color="danger" @click=${this.#cancel}></uui-button>`
-          : html`<uui-button
+          : hasSuccessfulJob
+            ? null
+            : html`<uui-button
               slot="actions"
               type="button"
               label="Translate"

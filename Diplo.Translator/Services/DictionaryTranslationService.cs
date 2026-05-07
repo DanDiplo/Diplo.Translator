@@ -52,13 +52,13 @@ public sealed class DictionaryTranslationService : IDictionaryTranslationService
         var dictionaryItems = await GetAllDictionaryItemsAsync();
 
         response.DictionaryCount = dictionaryItems.Count;
-        job.Progress.DictionaryCount = dictionaryItems.Count;
+        job.SetDictionaryCount(dictionaryItems.Count);
         job.SetStatus(TranslationJobStatus.Running, "Translating dictionary items...");
 
         foreach (var entry in dictionaryItems)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            job.Progress.ProcessedItemCount++;
+            job.IncrementProcessedItemCount();
             job.SetCurrentItem(entry.ItemKey);
             var translatedCultures = new List<string>();
             var fromText = GetTranslationValue(entry, fromLanguage.IsoCode);
@@ -125,7 +125,7 @@ public sealed class DictionaryTranslationService : IDictionaryTranslationService
         }
 
         response.SkippedCount += count;
-        job.Progress.SkippedCount += count;
+        job.IncrementSkippedCount(count);
     }
 
     private async Task SaveDictionaryItemAsync(
@@ -151,7 +151,7 @@ public sealed class DictionaryTranslationService : IDictionaryTranslationService
             logger.LogError(ex, message);
             job.AddError(message);
             response.ErrorCount++;
-            job.Progress.ErrorCount++;
+            job.IncrementErrorCount();
         }
     }
 
@@ -163,7 +163,7 @@ public sealed class DictionaryTranslationService : IDictionaryTranslationService
         DictionaryTranslationResponse response,
         CancellationToken cancellationToken)
     {
-        job.Progress.AttemptedTranslationCount++;
+        job.IncrementAttemptedTranslationCount();
         job.SetStatus(TranslationJobStatus.Running, $"Translating {from} to {to}...");
 
         var result = await translationService.TranslateAsync(fromText, to, from, cancellationToken);
@@ -171,7 +171,7 @@ public sealed class DictionaryTranslationService : IDictionaryTranslationService
         if (result.IsSuccess && !string.IsNullOrWhiteSpace(result.Text))
         {
             response.TranslationCount++;
-            job.Progress.TranslationCount++;
+            job.IncrementTranslationCount();
             return result.Text;
         }
 
@@ -182,7 +182,7 @@ public sealed class DictionaryTranslationService : IDictionaryTranslationService
         logger.LogError("{TranslationError}", message);
         job.AddError(message!);
         response.ErrorCount++;
-        job.Progress.ErrorCount++;
+        job.IncrementErrorCount();
         return null;
     }
 }

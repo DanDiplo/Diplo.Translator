@@ -89,6 +89,7 @@ public sealed class TranslationApiController : ManagementApiControllerBase
     }
 
     [HttpGet("jobs/{jobId:guid}")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType<TranslationJobDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<TranslationJobDto> GetJob(Guid jobId)

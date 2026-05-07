@@ -78,7 +78,7 @@ public sealed class TranslationJobManager : ITranslationJobManager
 
             if (job.Status != TranslationJobStatus.Cancelled)
             {
-                var status = job.Progress.ErrorCount > 0 ? TranslationJobStatus.CompletedWithErrors : TranslationJobStatus.Completed;
+                var status = job.ErrorCount > 0 ? TranslationJobStatus.CompletedWithErrors : TranslationJobStatus.Completed;
                 job.SetStatus(status, job.Progress.Message);
             }
         }
@@ -94,8 +94,8 @@ public sealed class TranslationJobManager : ITranslationJobManager
         }
         finally
         {
-            job.CompletedUtc ??= DateTimeOffset.UtcNow;
-            _ = RemoveAfterRetentionAsync(job.Id, job.CompletedUtc.Value);
+            job.MarkCompleted();
+            _ = RemoveAfterRetentionAsync(job.Id, job.CompletedUtc!.Value);
         }
     }
 

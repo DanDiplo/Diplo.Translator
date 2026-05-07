@@ -54,7 +54,7 @@ export async function startJob(fromCulture: string, overwrite: boolean): Promise
 }
 
 export async function getJob(jobId: string): Promise<TranslationJob> {
-  return translatorGet<TranslationJob>(`jobs/${jobId}`);
+  return translatorGet<TranslationJob>(`jobs/${jobId}?_=${Date.now()}`);
 }
 
 export async function cancelJob(jobId: string): Promise<void> {
